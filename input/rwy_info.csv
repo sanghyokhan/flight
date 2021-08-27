@@ -1,8 +1,8 @@
-﻿arpt,fe,rwy_heading,rwy_length
-KSFB,55,,
-KORL,,,
-KMCO,,,
-KLAL,,,
-KTIX,,,
-KMLB,,,
-KOCF,,,
+﻿arpt,fe,rwy1,heading1,length1,rwy2,heading2,length2,rwy3,heading3,length3,rwy4,heading4,length4,rwy5,heading5,length5
+KSFB,55,9L/27R,95,11002,9C/27C,95,3578,9R/27L,95,5839,18/36,185,6002,,,
+KORL,113,7/25,73,6004,13/31,137,4625,,,,,,,,,
+KMCO,,,,,,,,,,,,,,,,
+KLAL,,,,,,,,,,,,,,,,
+KTIX,,,,,,,,,,,,,,,,
+KMLB,,,,,,,,,,,,,,,,
+KOCF,,,,,,,,,,,,,,,,
