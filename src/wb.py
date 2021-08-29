@@ -182,7 +182,7 @@ else:
     print('  ' + metar + '\n')
 print('- Departure TAF')
 if len(taf) == 0:
-    print('  TAF not reported')
+    print('  TAF not reported\n')
 else:
     print('  ' + taf + '\n\n')
 
@@ -193,7 +193,7 @@ else:
     print('  ' + metar2 + '\n')
 print('- Arrival TAF')
 if len(taf2) == 0:
-    print('  TAF not reported')
+    print('  TAF not reported\n')
 else:
     print('  ' + taf2)
 
@@ -237,6 +237,44 @@ issue_time = datetime.strptime(yyyymm + issue, '%Y%m%d%H%M')
 
 
 
+# departure data
+chg = list(re.finditer(pattern_chg, taf))
+dep_taf_df = pd.DataFrame()
+dep_taf_df = dep_taf_df.append(pd.DataFrame({issue_time : metar}, index = ['taf']).T)
+taftaf = taf
+for change in range(len(chg)):
+    try:
+        temp_taf = taftaf[chg[change].start():chg[change+1].start()]
+    except:
+        temp_taf = taftaf[chg[change].start():]
+        
+    if taftaf[chg[change].start():chg[change].start()+2] == 'FM':
+        temp_time = datetime.strptime(yyyymm+temp_taf[2:8], '%Y%m%d%H%M')
+        dep_taf_df = dep_taf_df.append(pd.DataFrame({temp_time : temp_taf}, index = ['taf']).T)
+    elif taftaf[chg[change].start():chg[change].start()+5] == 'BECMG':
+        temp_time = datetime.strptime(yyyymm+temp_taf[6:10], '%Y%m%d%H')
+        dep_taf_df = dep_taf_df.append(pd.DataFrame({temp_time : temp_taf}, index = ['taf']).T)
+    elif taftaf[chg[change].start():chg[change].start()+5] == 'TEMPO':           
+        temp_time_s = datetime.strptime(yyyymm+temp_taf[6:10], '%Y%m%d%H')
+        temp_time_e = datetime.strptime(yyyymm+temp_taf[11:15], '%Y%m%d%H')
+        dep_taf_df = dep_taf_df.append(pd.DataFrame({temp_time_s : temp_taf}, index = ['taf']).T)
+        dep_taf_df = dep_taf_df.append(pd.DataFrame(dep_taf_df.iloc[-2,:].values, index = [temp_time_e], columns = ['taf']))
+
+wx1 = pd.DataFrame({issue_time : metar}, index = ['taf']).T
+for i in range(1, len(dep_taf_df)):
+    if dep_taf_df.index[1] > time:
+        if time - datetime.utcnow() + timedelta(minutes = 5) > timedelta(hours = 1):    # 1시간 이상이면
+            wx1 = taf[:chg[0].start()]
+        else:
+            wx1 = dep_taf_df['taf'][0]
+        break
+    elif dep_taf_df.index[i] < time:
+        wx1 = dep_taf_df['taf'][i]
+    else:
+        break
+
+
+
 # arrival data
 issue_2 = metar2[re.search(pattern_issue, metar2).start() : re.search(pattern_issue, metar2).start()+6]
 if datetime.utcnow().day > int(issue_2[:2]):
@@ -245,22 +283,22 @@ else:
     yyyymm = datetime.utcnow().strftime('%Y') + datetime.utcnow().strftime('%m')
 issue_time_2 = datetime.strptime(yyyymm + issue_2, '%Y%m%d%H%M')
 chg2 = list(re.finditer(pattern_chg, taf2))
-taf_df = pd.DataFrame()
+taf_df = pd.DataFrame()    # taf_df = arr_taf_df
 taf_df = taf_df.append(pd.DataFrame({issue_time_2 : metar2}, index = ['taf']).T)
-taftaf = taf
+taftaf2 = taf2
 for change in range(len(chg2)):
     try:
-        temp_taf = taftaf[chg2[change].start():chg2[change+1].start()]
+        temp_taf = taftaf2[chg2[change].start():chg2[change+1].start()]
     except:
-        temp_taf = taftaf[chg2[change].start():]
+        temp_taf = taftaf2[chg2[change].start():]
         
-    if taftaf[chg2[change].start():chg2[change].start()+2] == 'FM':
+    if taftaf2[chg2[change].start():chg2[change].start()+2] == 'FM':
         temp_time = datetime.strptime(yyyymm+temp_taf[2:8], '%Y%m%d%H%M')
         taf_df = taf_df.append(pd.DataFrame({temp_time : temp_taf}, index = ['taf']).T)
-    elif taftaf[chg2[change].start():chg2[change].start()+5] == 'BECMG':
+    elif taftaf2[chg2[change].start():chg2[change].start()+5] == 'BECMG':
         temp_time = datetime.strptime(yyyymm+temp_taf[6:10], '%Y%m%d%H')
         taf_df = taf_df.append(pd.DataFrame({temp_time : temp_taf}, index = ['taf']).T)
-    elif taftaf[chg2[change].start():chg2[change].start()+5] == 'TEMPO':           
+    elif taftaf2[chg2[change].start():chg2[change].start()+5] == 'TEMPO':           
         temp_time_s = datetime.strptime(yyyymm+temp_taf[6:10], '%Y%m%d%H')
         temp_time_e = datetime.strptime(yyyymm+temp_taf[11:15], '%Y%m%d%H')
         taf_df = taf_df.append(pd.DataFrame({temp_time_s : temp_taf}, index = ['taf']).T)
@@ -269,25 +307,33 @@ for change in range(len(chg2)):
 wx2 = pd.DataFrame({issue_time_2 : metar2}, index = ['taf']).T
 for i in range(1, len(taf_df)):
     if taf_df.index[1] > time2:
-        wx2 = taf[:chg2[0].start()]
+        wx2 = taf2[:chg2[0].start()]
         break
     elif taf_df.index[i] < time2:
         wx2 = taf_df['taf'][i]
     else:
         break
 
-issue2 = taf[re.search(pattern_issue, taf).start() : re.search(pattern_issue, taf).start()+6]
+issue2 = taf2[re.search(pattern_issue, taf2).start() : re.search(pattern_issue, taf2).start()+6]
 issue_time2 = datetime.strptime(yyyymm + issue2, '%Y%m%d%H%M')
 
 
 
 # wind
-wind_dir = metar[re.search(pattern_wind, metar).start()+1 : re.search(pattern_wind, metar).start()+4].zfill(3)
-wind_vel = metar[re.search(pattern_wind, metar).start()+4 : re.search(pattern_wind, metar).start()+6].zfill(2)
-if metar[re.search(pattern_wind, metar).start()+6] == 'G':
-    gust = metar[re.search(pattern_wind, metar).start()+6 : re.search(pattern_wind, metar).start()+9]
-else:
-    gust = 0
+try:
+    wind_dir = wx1[re.search(pattern_wind, wx1).start()+1 : re.search(pattern_wind, wx1).start()+4].zfill(3)
+    wind_vel = wx1[re.search(pattern_wind, wx1).start()+4 : re.search(pattern_wind, wx1).start()+6].zfill(2)
+    if wx1[re.search(pattern_wind, wx1).start()+6] == 'G':
+        gust = wx1[re.search(pattern_wind, wx1).start()+6 : re.search(pattern_wind, wx1).start()+9]
+    else:
+        gust = 0
+except:
+    wind_dir = metar[re.search(pattern_wind, metar).start()+1 : re.search(pattern_wind, metar).start()+4].zfill(3)
+    wind_vel = metar[re.search(pattern_wind, metar).start()+4 : re.search(pattern_wind, metar).start()+6].zfill(2)
+    if metar[re.search(pattern_wind, metar).start()+6] == 'G':
+        gust = metar[re.search(pattern_wind, metar).start()+6 : re.search(pattern_wind, metar).start()+9]
+    else:
+        gust = 0
 
 
 
@@ -308,7 +354,10 @@ except:
 
 
 # vis
-vis =  int(metar[re.search(pattern_vis, metar).start()+1 : re.search(pattern_vis, metar).end()-3])
+try:
+    vis =  int(wx1[re.search(pattern_vis, wx1).start()+1 : re.search(pattern_vis, wx1).end()-3])
+except:
+    vis =  int(metar[re.search(pattern_vis, metar).start()+1 : re.search(pattern_vis, metar).end()-3])
 
 
 
@@ -321,7 +370,10 @@ except:
 
 
 # cloud
-cloud_list = list(re.finditer(pattern_cloud, metar))
+try:
+    cloud_list = list(re.finditer(pattern_cloud, wx1))
+except:
+    cloud_list = list(re.finditer(pattern_cloud, metar))
 for cld in range(len(cloud_list)):
     if (cloud_list[cld][0][:3] == 'BKN') or (cloud_list[cld][0][:3] == 'OVC'):
         cig = cloud_list[cld][0]
@@ -346,14 +398,24 @@ except:
 
 
 # temp, due
-if metar[re.search(pattern_temp, metar).start()] == 'M':
-    temp = int(metar[re.search(pattern_temp, metar).start()+1 : re.search(pattern_temp, metar).start()+3]) * (-1)
-else:
-    temp = int(metar[re.search(pattern_temp, metar).start() : re.search(pattern_temp, metar).start()+2])
-if metar[re.search(pattern_temp, metar).end()-3] == 'M':
-    due = int(metar[re.search(pattern_temp, metar).end()-2 : re.search(pattern_temp, metar).end()]) * (-1)
-else:
-    due = int(metar[re.search(pattern_temp, metar).end()-2 : re.search(pattern_temp, metar).end()])
+try: 
+    if wx1[re.search(pattern_temp, wx1).start()] == 'M':
+        temp = int(wx1[re.search(pattern_temp, wx1).start()+1 : re.search(pattern_temp, wx1).start()+3]) * (-1)
+    else:
+        temp = int(wx1[re.search(pattern_temp, wx1).start() : re.search(pattern_temp, wx1).start()+2])
+    if wx1[re.search(pattern_temp, wx1).end()-3] == 'M':
+        due = int(wx1[re.search(pattern_temp, wx1).end()-2 : re.search(pattern_temp, wx1).end()]) * (-1)
+    else:
+        due = int(wx1[re.search(pattern_temp, wx1).end()-2 : re.search(pattern_temp, wx1).end()])
+except:
+    if metar[re.search(pattern_temp, metar).start()] == 'M':
+        temp = int(metar[re.search(pattern_temp, metar).start()+1 : re.search(pattern_temp, metar).start()+3]) * (-1)
+    else:
+        temp = int(metar[re.search(pattern_temp, metar).start() : re.search(pattern_temp, metar).start()+2])
+    if metar[re.search(pattern_temp, metar).end()-3] == 'M':
+        due = int(metar[re.search(pattern_temp, metar).end()-2 : re.search(pattern_temp, metar).end()]) * (-1)
+    else:
+        due = int(metar[re.search(pattern_temp, metar).end()-2 : re.search(pattern_temp, metar).end()])
 
 
 
@@ -372,7 +434,11 @@ else:
 
 
 # pressure
-pres = int(metar[re.search(pattern_pres, metar).start()+1 : re.search(pattern_pres, metar).start()+5])/100
+try:
+    pres = int(wx1[re.search(pattern_pres, wx1).start()+1 : re.search(pattern_pres, wx1).start()+5])/100
+except:
+    pres = int(metar[re.search(pattern_pres, metar).start()+1 : re.search(pattern_pres, metar).start()+5])/100
+
 
 
 
@@ -417,6 +483,10 @@ da2 = round(da2)
 #####################################################################################################################
 
 # 현천 나오게 하기
+
+
+
+
 
 ###################################################################################################################
 
@@ -554,6 +624,7 @@ print('\n-----------------------------------------------------------------------
 """ takeoff data """
 
 print('< Takeoff Dataframe > \n')
+print('Current Time : ' + datetime.utcnow() + '\n')
 
 wx = pd.DataFrame({'issue(Z)' : issue_time,
                     'time' : time,
