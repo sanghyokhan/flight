@@ -550,9 +550,9 @@ elif wind_dir == 'VRB':
     crosswind = wind_vel
 else:
     headwind = np.cos(abs(int(wind_dir) - active_rwy_heading[0]) * np.pi/180) * float(wind_vel)
-    headwind = round(headwind,1)
+    headwind = abs(round(headwind,1))
     crosswind = np.sin(abs(int(wind_dir) - active_rwy_heading[0]) * np.pi/180) * float(wind_vel)
-    crosswind = round(crosswind,1)
+    crosswind = abs(round(crosswind,1))
 
 print('\n\n')
 
@@ -612,9 +612,86 @@ elif wind_dir2 == 'X':
     crosswind2 = wind_vel2
 else:
     headwind2 = np.cos(abs(int(wind_dir2) - active_rwy_heading2[0]) * np.pi/180) * float(wind_vel2)
-    headwind2 = round(headwind2,1)
+    headwind2 = abs(round(headwind2,1))
     crosswind2 = np.sin(abs(int(wind_dir2) - active_rwy_heading2[0]) * np.pi/180) * float(wind_vel2)
-    crosswind2 = round(crosswind2,1)
+    crosswind2 = abs(round(crosswind2,1))
+print('\n-------------------------------------------------------------------------------------\n')
+
+
+
+
+
+""" Weight & Balance """
+print('< Weight and Balance > \n')
+# arm은 기종에 따라 달라지도록
+basic_empty_weight = cs_df['BEW'][0]
+basic_empty_arm = cs_df['CG'][0]
+basic_empty_moment = cs_df['BEW Moment'][0]
+basic_empty = pd.DataFrame({'Weight' : basic_empty_weight, 'Arm' : basic_empty_arm, 'Moment' : basic_empty_moment}, index = ['Basic Empty Weight'])
+
+pilot_weight = float(input('Pilot and Passenger Weight : '))
+pilot_arm = 80.5
+pilot_moment = pilot_weight * pilot_arm
+pilot = pd.DataFrame({'Weight' : pilot_weight, 'Arm' : pilot_arm, 'Moment' : pilot_moment}, index = ['Pilot and Passenger'])
+
+passenger_weight = float(input('Rear Passenger Weight : '))
+passenger_arm = 118.1
+passenger_moment = passenger_weight * passenger_arm
+passenger = pd.DataFrame({'Weight' : passenger_weight, 'Arm' : passenger_arm, 'Moment' : passenger_moment}, index = ['Rear Passenger'])
+
+baggage_a_weight = float(input('Baggage Weight : '))
+baggage_a_arm = 142.8
+baggage_a_moment = baggage_a_weight * baggage_a_arm
+baggage_a = pd.DataFrame({'Weight' : baggage_a_weight, 'Arm' : baggage_a_arm, 'Moment' : baggage_a_moment}, index = ['Baggage'])
+
+baggage_b_weight = 0
+baggage_b_arm = 0
+baggage_b_moment = baggage_b_weight * baggage_b_arm
+# baggage_b = pd.DataFrame({'Weight' : baggage_b_weight, 'Arm' : baggage_b_arm, 'Moment' : baggage_b_moment}, index = ['Baggage B'])
+
+zero_fuel_weight = basic_empty_weight + pilot_weight + passenger_weight + baggage_a_weight + baggage_b_weight
+zero_fuel_moment = basic_empty_moment + pilot_moment + passenger_moment + baggage_a_moment + baggage_b_moment
+zero_fuel_arm = zero_fuel_moment / zero_fuel_weight
+zero_fuel = pd.DataFrame({'Weight' : zero_fuel_weight, 'Arm' : zero_fuel_arm, 'Moment' : zero_fuel_moment}, index = ['Zero Fuel Weight'])
+
+fuel_100ll = 6
+fuel_volume = float(input('Fuel [gal] : '))
+fuel_weight = fuel_volume * fuel_100ll    
+fuel_arm = 95
+fuel_moment = fuel_weight * fuel_arm
+fuel = pd.DataFrame({'Weight' : fuel_weight, 'Arm' : fuel_arm, 'Moment' : fuel_moment}, index = ['Fuel'])
+
+ramp_weight = zero_fuel_weight + fuel_weight
+ramp_moment = zero_fuel_moment + fuel_moment 
+ramp_arm = ramp_moment / ramp_weight
+ramp = pd.DataFrame({'Weight' : ramp_weight, 'Arm' : ramp_arm, 'Moment' : ramp_moment}, index = ['Ramp Weight'])
+
+start_weight = -8
+start_arm = 95
+start_moment = start_weight * start_arm
+start = pd.DataFrame({'Weight' : start_weight, 'Arm' : start_arm, 'Moment' : start_moment}, index = ['Start/Taxi/Run-up'])
+
+takeoff_weight = ramp_weight + start_weight
+takeoff_moment = ramp_moment + start_moment
+takeoff_arm = takeoff_moment / takeoff_weight
+takeoff = pd.DataFrame({'Weight' : takeoff_weight, 'Arm' : takeoff_arm, 'Moment' : takeoff_moment}, index = ['Takeoff Weight'])
+
+fuel_to_use = float(input('Fuel Burn [gal] : '))
+fuel_burn_volume = (-1) * fuel_to_use
+fuel_burn_weight = fuel_burn_volume * fuel_100ll
+fuel_burn_arm = 95
+fuel_burn_moment = fuel_burn_weight * fuel_burn_arm
+fuel_burn = pd.DataFrame({'Weight' : fuel_burn_weight, 'Arm' : fuel_burn_arm, 'Moment' : fuel_burn_moment}, index = ['Fuel Burn'])
+
+landing_weight = takeoff_weight + fuel_burn_weight
+landing_moment = takeoff_moment + fuel_burn_moment
+landing_arm = landing_moment / landing_weight
+landing = pd.DataFrame({'Weight' : landing_weight, 'Arm' : landing_arm, 'Moment' : landing_moment}, index = ['Landing Weight'])
+
+
+takeoff_data = pd.concat([basic_empty, pilot, passenger, baggage_a, zero_fuel, fuel, ramp, start, takeoff, fuel_burn, landing])
+print('\n\n')
+print(takeoff_data)
 print('\n-------------------------------------------------------------------------------------\n')
 
 
@@ -623,14 +700,13 @@ print('\n-----------------------------------------------------------------------
 
 """ takeoff data """
 
-print('< Takeoff Dataframe > \n')
-print('Current Time : ' + datetime.utcnow() + '\n')
+print('< Takeoff Data > \n')
+print('Current Time : ' + str(datetime.utcnow()) + '\n')
 
 wx = pd.DataFrame({'issue(Z)' : issue_time,
                     'time' : time,
                     'airport' : arpt,
-                    'wind_direction' : wind_dir,
-                    'wind_velocity' : wind_vel,
+                    'wind' : wind_dir + wind_vel,
                     'gust' : gust,
                     'visibility' : vis,
                     'ceiling' : cig,
@@ -647,8 +723,7 @@ wx = pd.DataFrame({'issue(Z)' : issue_time,
 wx = wx.append(pd.DataFrame({'issue(Z)' : issue_time2,
                     'time' : time2,
                     'airport' : arpt2,
-                    'wind_direction' : wind_dir2,
-                    'wind_velocity' : wind_vel2,
+                    'wind' : wind_dir2 + wind_vel2,
                     'gust' : gust2,
                     'visibility' : vis2,
                     'ceiling' : cig2,
@@ -663,5 +738,68 @@ wx = wx.append(pd.DataFrame({'issue(Z)' : issue_time2,
                     'crosswind_component' : crosswind2
                     }, index = ['Arrival']))
 print(wx.T)
+print('\n\n')
+
+
+
+
+
+
+""" V Speed """
+
+vs0 = 45
+vs1 = 50
+vr = ((takeoff_weight / 2550)**(1/2)) * 60
+vr_short = ((takeoff_weight / 2550)**(1/2)) * 55
+vx = 64
+cruise_climb_v = 87
+vlo = 'X'
+vy = 76
+vfe = 102
+v_man = ((landing_weight/2550)**(1/2))*113
+vno = 125
+vle = 'X'
+vne = 154
+vg_to = ((takeoff_weight/2550)**(1/2))*76
+vg_ld = ((landing_weight/2550)**(1/2))*76
+va = ((landing_weight/2550)**(1/2))*66
+maxwind = 17
+
+vspeed = pd.DataFrame({'Vso' : vs0,
+                       'Vs1' : vs1,
+                       'Vr' : vr,
+                       'short Vr' : vr_short,
+                       'Vx' : vx,
+                       'Vy' : vy,
+                       'Vfe' : vfe,
+                       'Va' : v_man,
+                       'Vno' : vno,
+                       'Vne' : vne,
+                       'takeoff Vg' : vg_to,
+                       'landing Vg' : vg_ld,
+                       'Approach Speed' : va,
+                       'Max. Crosswind' : maxwind,
+                       'Cruise Climb' : cruise_climb_v,
+                       'Vlo' : vlo,
+                       'Vle' : vle
+                       }, index = ['Speed'])
+print(vspeed.T)
+print('\n-------------------------------------------------------------------------------------\n')
+
+
+
+
+print('<ICAO Flight Plan information>\n')
+print('7  -  Aircraft ID : ' + cs_df['ID'][0])
+print('8  -  FLight Plan : I')
+print('      Type of Flight : G')
+print('9  -  Number : 1')
+print('      Type of Aircraft : PA28')
+print('      Wake Turbulence : F/L')
+print('10 -  Equipment : ' + cs_df['Equip'][0])
+print('      SURV : ' + cs_df['SURV'][0])
+print('18 -  Other : B2')
+
+
 print('\n-------------------------------------------------------------------------------------\n')
 print('CREDITS \n ============ \n\n Sanghyok Han \n\n ============ \n\n')
