@@ -3,6 +3,7 @@
 Install following python packages:
     pandas
     selenium
+    pywin32
     
 
 Takeoff Data
