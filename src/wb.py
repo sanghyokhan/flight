@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 import numpy as np
+import win32com.client
 from os import system
 from datetime import datetime, timedelta
 from selenium import webdriver
@@ -107,6 +108,7 @@ while True:
     else:
         print(f'- Aircraft N number : {cs}')
         break
+cs_df = cs_df.reset_index(drop = True)
 print('\n-------------------------------------------------------------------------------------\n')
 
 
@@ -326,14 +328,14 @@ try:
     if wx1[re.search(pattern_wind, wx1).start()+6] == 'G':
         gust = wx1[re.search(pattern_wind, wx1).start()+6 : re.search(pattern_wind, wx1).start()+9]
     else:
-        gust = 0
+        gust = str(0)
 except:
     wind_dir = metar[re.search(pattern_wind, metar).start()+1 : re.search(pattern_wind, metar).start()+4].zfill(3)
     wind_vel = metar[re.search(pattern_wind, metar).start()+4 : re.search(pattern_wind, metar).start()+6].zfill(2)
     if metar[re.search(pattern_wind, metar).start()+6] == 'G':
         gust = metar[re.search(pattern_wind, metar).start()+6 : re.search(pattern_wind, metar).start()+9]
     else:
-        gust = 0
+        gust = str(0)
 
 
 
@@ -345,7 +347,7 @@ try:
     if wx2[re.search(pattern_wind, wx2).start()+6] == 'G':
         gust2 = wx2[re.search(pattern_wind, wx2).start()+6 : re.search(pattern_wind, wx2).start()+9]
     else:
-        gust2 = 0
+        gust2 = str(0)
 except: 
     wind_dir2 = 'X'
     wind_vel2 = 'X'
@@ -768,7 +770,7 @@ maxwind = 17
 vspeed = pd.DataFrame({'Vso' : vs0,
                        'Vs1' : vs1,
                        'Vr' : vr,
-                       'short Vr' : vr_short,
+                       'Vr - Short Field' : vr_short,
                        'Vx' : vx,
                        'Vy' : vy,
                        'Vfe' : vfe,
@@ -803,3 +805,69 @@ print('18 -  Other : B2')
 
 print('\n-------------------------------------------------------------------------------------\n')
 print('CREDITS \n ============ \n\n Sanghyok Han \n\n ============ \n\n')
+
+
+
+
+
+""" import to flightplan.xlsx """
+excel = win32com.client.Dispatch("Excel.Application")
+excel.Visible = True
+
+try:
+    wb.Close(True)    #wb.SaveAs('C:/Users/user/proj/flight/result/flightplan.xlsx')
+    excel.Quit()
+    wb = excel.Workbooks.Open('C:/Users/user/proj/flight/result/flightplan.xlsx')
+    ws = wb.ActiveSheet
+except:
+    wb = excel.Workbooks.Open('C:/Users/user/proj/flight/result/flightplan.xlsx')
+    ws = wb.ActiveSheet
+
+ws.Cells(1, 2).Value = issue_time
+ws.Cells(2, 2).Value = time
+ws.Cells(3, 2).Value = arpt
+if gust == '0':
+    ws.Cells(4, 2).Value = wind_dir + wind_vel
+elif gust == 'X':
+    ws.Cells(4, 2).Value = wind_dir + wind_vel
+else:
+    ws.Cells(4, 2).Value = wind_dir + wind_vel + 'G' + gust
+ws.Cells(5, 2).Value = vis
+ws.Cells(6, 2).Value = cig
+ws.Cells(7, 2).Value = temp
+ws.Cells(8, 2).Value = due
+ws.Cells(9, 2).Value = pres
+ws.Cells(10, 2).Value = active_rwy
+ws.Cells(11, 2).Value = pa
+ws.Cells(12, 2).Value = da
+ws.Cells(13, 2).Value = str(active_rwy_length)
+ws.Cells(14, 2).Value = headwind
+ws.Cells(15, 2).Value = crosswind
+
+ws.Cells(1, 3).Value = issue_time2
+ws.Cells(2, 3).Value = time2
+ws.Cells(3, 3).Value = arpt2
+if gust2 == '0':
+    ws.Cells(4, 3).Value = wind_dir2 + wind_vel2
+elif gust2 == 'X':
+    ws.Cells(4, 3).Value = wind_dir2 + wind_vel2
+else:
+    ws.Cells(4, 3).Value = wind_dir2 + wind_vel2 + 'G' + gust2
+ws.Cells(5, 3).Value = vis2
+ws.Cells(6, 3).Value = cig2
+ws.Cells(7, 3).Value = temp2
+ws.Cells(8, 3).Value = due2
+ws.Cells(9, 3).Value = pres2
+ws.Cells(10, 3).Value = active_rwy2
+ws.Cells(11, 3).Value = pa2
+ws.Cells(12, 3).Value = da2
+ws.Cells(13, 3).Value = str(active_rwy_length2)
+ws.Cells(14, 3).Value = headwind2
+ws.Cells(15, 3).Value = crosswind2
+
+
+
+
+# print(ws.Cells(1,1).Value)
+#wb.Close(True)    #wb.SaveAs('C:/Users/user/proj/flight/result/flightplan.xlsx')
+#excel.Quit()
