@@ -2,7 +2,7 @@ import re
 import pandas as pd
 import numpy as np
 import win32com.client
-from os import system
+from os import system, path
 from datetime import datetime, timedelta
 from selenium import webdriver
 
@@ -863,13 +863,19 @@ print('CREDITS \n ============ \n\n Sanghyok Han \n\n ============ \n\n')
 
 
 
+#########################################################################################
 
+# sr20는 takeoff data card 형식이 약간 다름 -> ws2등으로 해야할 듯
+
+#########################################################################################
 """ import to flightplan.xlsx """
 excel = win32com.client.Dispatch("Excel.Application")
 excel.Visible = True
-wb = excel.Workbooks.Open('C:/Users/user/proj/flight/result/flightplan.xlsx')
+fullpath = path.abspath('./flightplan.xlsx')
+wb = excel.Workbooks.Open(fullpath)
+#wb = excel.Workbooks.Open('./flightplan.xlsx')
 ws = wb.Worksheets('takeoff_data')
-ws2 = wb.Worksheets('flight_planning')
+ws3 = wb.Worksheets('flight_planning')
 
 ws.Cells(3, 2).Value = cs
 
