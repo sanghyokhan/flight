@@ -704,7 +704,7 @@ fuel_volume = input('Fuel [gal] : ')
 print ('\033[1A' + '\033[K')
 while True :
     if len(fuel_volume) == 0:
-        fuel_volume = 48
+        fuel_volume = 80       #48 = archer
         print(f'Fuel [gal] : {fuel_volume}')
         break
     else:
@@ -722,7 +722,7 @@ ramp_moment = zero_fuel_moment + fuel_moment
 ramp_arm = round(ramp_moment / ramp_weight, 1)
 ramp = pd.DataFrame({'Weight' : ramp_weight, 'Arm' : ramp_arm, 'Moment' : ramp_moment}, index = ['Ramp Weight'])
 
-start_weight = -8
+start_weight = -16    #-8 = archer
 start_arm = 95
 start_moment = start_weight * start_arm
 start = pd.DataFrame({'Weight' : start_weight, 'Arm' : start_arm, 'Moment' : start_moment}, index = ['Start/Taxi/Run-up'])
@@ -741,7 +741,7 @@ fuel_burn = pd.DataFrame({'Weight' : fuel_burn_weight, 'Arm' : fuel_burn_arm, 'M
 
 landing_weight = takeoff_weight + fuel_burn_weight
 landing_moment = takeoff_moment + fuel_burn_moment
-landing_arm = landing_moment / landing_weight
+landing_arm = round(landing_moment / landing_weight, 1)
 landing = pd.DataFrame({'Weight' : landing_weight, 'Arm' : landing_arm, 'Moment' : landing_moment}, index = ['Landing Weight'])
 
 
@@ -803,22 +803,22 @@ print('\n\n')
 
 """ V Speed """
 
-vs0 = 45
-vs1 = 50
-vr = round(((takeoff_weight / 2550)**(1/2)) * 60, 1)
-vr_short = round(((takeoff_weight / 2550)**(1/2)) * 55, 1)
-vx = 64
-cruise_climb_v = 87
-vlo = 'X'
-vy = 76
-vfe = 102
-v_man = round(((landing_weight/2550)**(1/2))*113, 1)
-vno = 125
-vle = 'X'
-vne = 154
-vg_to = round(((takeoff_weight/2550)**(1/2))*76, 1)
-vg_ld = round(((landing_weight/2550)**(1/2))*76, 1)
-va = round(((landing_weight/2550)**(1/2))*66, 1)
+vs0 = 55    #45
+vs1 = 57    #50
+vr = 75    #round(((takeoff_weight / 2550)**(1/2)) * 60, 1)
+vr_short = 70    #round(((takeoff_weight / 2550)**(1/2)) * 55, 1)
+vx = 82    #64
+cruise_climb_v = 105    #87
+vlo = 140/109    #'X'
+vy = 88    #76
+vfe = 111     #102
+v_man = 135    #round(((landing_weight/2550)**(1/2))*113, 1)
+vno = 169    #125
+vle = 140    #'X'
+vne = 202    #154
+vg_to = 'X'    #round(((takeoff_weight/2550)**(1/2))*76, 1)
+vg_ld = 'X'    #round(((landing_weight/2550)**(1/2))*76, 1)
+va = '90/75'   #round(((landing_weight/2550)**(1/2))*66, 1)    
 maxwind = 17
 
 vspeed = pd.DataFrame({'Vso' : vs0,
@@ -850,7 +850,7 @@ print('7  -  Aircraft ID : ' + cs_df['ID'][0])
 print('8  -  FLight Plan : I')
 print('      Type of Flight : G')
 print('9  -  Number : 1')
-print('      Type of Aircraft : PA28')
+print('      Type of Aircraft : PA44')    #PA28
 print('      Wake Turbulence : F/L')
 print('10 -  Equipment : ' + cs_df['Equip'][0])
 print('      SURV : ' + cs_df['SURV'][0])
